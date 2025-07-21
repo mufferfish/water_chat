@@ -1,4 +1,1 @@
 streamlit
-streamlit-chat
-joblib
-pandas
