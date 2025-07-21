@@ -10,9 +10,9 @@ ph_q = st.radio("1. 물에 거품이 많이 생기나요?", ["O", "X"])
 rust_q = st.radio("2. 물이 붉거나 갈색인가요?", ["O", "X"])
 solids_q = st.slider("3. 물에 이물질이 보이나요? (탁한 정도)", 0, 50000, 15000)
 chlorine_q = st.radio("4. 소독약(염소) 냄새가 많이 나나요?", ["O", "X"])
-metallic_q = st.radio("5. 금속 맛이 느껴지나요?", ["O", "X"])
+metallic_q = st.radio("5. 배관이 오래된 건물(20년 이상)에서 나오는 물인가요?", ["O", "X"])
 smell_q = st.radio("6. 냄새가 나나요?", ["O", "X"])
-trihalo_q = st.radio("7. 오래된 물 맛이 나거나 불쾌한 맛이 나나요?", ["O", "X"])
+trihalo_q = st.radio("7. 오래된 물 냄새가 나거나 불쾌한 냄새가 나나요?", ["O", "X"])
 
 # 위험도 판단 함수
 def evaluate_water_risk(ph_q, rust_q, chlorine_q, metallic_q, smell_q, trihalo_q, solids_q):
