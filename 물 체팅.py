@@ -1,46 +1,77 @@
 import streamlit as st
-from streamlit_chat import message
-import joblib
-import pandas as pd
 
-# 모델 불러오기
-model = joblib.load("water_model.pkl")  # 같은 폴더에 있어야 함
+st.set_page_config(page_title="물 위험도 평가기", page_icon="💧")
 
-st.set_page_config(page_title="Water Quality Chatbot")
-st.title("💧 수질 예측 챗봇")
+st.title("💧 이 물, 얼마나 위험할까요?")
+st.markdown("간단한 설문에 답하면 물의 **위험 수준**을 판단해드립니다.")
 
-# 이전 메시지 저장
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# 👉 설문 입력
+ph_q = st.radio("1. 물에 거품이 많이 생기나요?", ["O", "X"])
+rust_q = st.radio("2. 물이 붉거나 갈색인가요?", ["O", "X"])
+solids_q = st.slider("3. 물에 이물질이 보이나요? (탁한 정도)", 0, 50000, 15000)
+chlorine_q = st.radio("4. 소독약(염소) 냄새가 많이 나나요?", ["O", "X"])
+metallic_q = st.radio("5. 금속 맛이 느껴지나요?", ["O", "X"])
+smell_q = st.radio("6. 냄새가 나나요?", ["O", "X"])
+trihalo_q = st.radio("7. 오래된 물 맛이 나거나 불쾌한 맛이 나나요?", ["O", "X"])
 
-# 사용자 입력을 간단한 수치로 변환하는 함수
-def parse_input(text):
-    ph, bod, turbidity = 7.0, 3.0, 3.0
-    if "시큼" in text or "신맛" in text:
-        ph = 5.8
-    if "비누" in text or "알칼리" in text:
-        ph = 8.3
-    if "썩" in text or "냄새" in text:
-        bod = 6.0
-    if "탁" in text or "흐림" in text:
-        turbidity = 7.0
-    return pd.DataFrame([{"ph": ph, "bod": bod, "turbidity": turbidity}])
+# 위험도 판단 함수
+def evaluate_water_risk(ph_q, rust_q, chlorine_q, metallic_q, smell_q, trihalo_q, solids_q):
+    reasons = []
+    if ph_q == "O":
+        reasons.append("pH 불균형 가능성 (거품 발생)")
+    if rust_q == "O":
+        reasons.append("산화철 또는 녹이 섞인 물")
+    if chlorine_q == "O":
+        reasons.append("잔류 염소 농도 과다 가능성")
+    if metallic_q == "O":
+        reasons.append("중금속류 또는 배관 오염 가능성")
+    if smell_q == "O":
+        reasons.append("미생물 또는 유기물 오염 가능성")
+    if trihalo_q == "O":
+        reasons.append("트리할로메탄(발암 물질) 가능성")
+    if solids_q > 30000:
+        reasons.append("탁도 과다 (이물질 농도 높음)")
 
-# 채팅 입력창
-user_input = st.chat_input("물 상태를 설명해주세요 (예: '물이 탁하고 냄새가 나요')")
+    risk_count = len(reasons)
 
-if user_input:
-    st.session_state.messages.append(("user", user_input))
+    if risk_count >= 3:
+        risk_level = "🔴 높은 위험"
+        summary = "여러 문제점이 발견되어 **음용을 피해야 합니다.**"
+    elif 1 <= risk_count <= 2:
+        risk_level = "🟠 주의 필요"
+        summary = "몇 가지 우려 사항이 있어 **음용 전 주의가 필요합니다.**"
+    else:
+        risk_level = "🟢 안전 추정"
+        summary = "특별한 문제는 발견되지 않았습니다. **마셔도 괜찮아 보입니다.** 😊"
 
-    # 입력을 모델용 데이터로 변환
-    df = parse_input(user_input)
+    return risk_level, summary, reasons
 
-    # 모델 예측
-    prediction = model.predict(df)[0]
-    result = "이 물은 마실 수 있어요." if prediction == 1 else "이 물은 마시면 안 돼요."
+# 결과 출력
+if st.button("🔍 물 위험도 평가하기"):
+    level, summary, reasons = evaluate_water_risk(ph_q, rust_q, chlorine_q, metallic_q, smell_q, trihalo_q, solids_q)
 
-    st.session_state.messages.append(("bot", result))
+    st.markdown("---")
+    st.subheader(f"📊 위험도 평가 결과: {level}")
+    st.write(summary)
 
-# 이전 대화 표시
-for sender, msg in st.session_state.messages:
-    message(msg, is_user=(sender == "user"))
+    if reasons:
+        st.markdown("**❗ 감지된 문제:**")
+        for r in reasons:
+            st.write(f"- {r}")
+    else:
+        st.success("✔ 모든 항목이 양호합니다!")
+
+    # 입력 요약
+    st.markdown("📋 **입력 요약:**")
+    st.write({
+        "거품 여부": ph_q,
+        "색깔 이상": rust_q,
+        "이물질 양": solids_q,
+        "염소 냄새": chlorine_q,
+        "금속 맛": metallic_q,
+        "냄새 여부": smell_q,
+        "이상한 맛": trihalo_q
+    })
+
+st.markdown("---")
+st.markdown("🔗 더 많은 AI 앱 만들기는 [gptonline.ai/ko](https://gptonline.ai/ko/)에서 확인해보세요!")
